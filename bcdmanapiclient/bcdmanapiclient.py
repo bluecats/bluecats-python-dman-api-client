@@ -3,20 +3,67 @@ import base64
 import json
 import getpass
 
-class BCAPIClient(object):
+class BCDmanAPIClient(object):
 
     base_url = "https://api.bluecats.com/"
     headers = None
     authorized = False
+    app_token = None 
+
+
+    @staticmethod
+    def login(verbose = False):
+        username = None
+        password = None
+        authorized = False
+        while not authorized:
+            if not username:
+                username = raw_input("enter bluecats dman api username/email:")
+            if username and not password:
+                password = getpass.getpass("enter bluecats dman api password:")
+            if not username or not password:
+                print "sorry, try again or use Ctrl-D to exit"
+            else:
+                api_client = BCDmanAPIClient.build_client_from_username_password(username, password, verbose=verbose)
+                authorized = api_client.check_authorization()
+                if authorized:
+                    return api_client
+                else:
+                    print "sorry, try again or use Ctrl-D to exit"
+                    username = None
+                    password = None
+
+    @staticmethod
+    def login_from_config(fileName, verbose = False):
+        try: 
+            if "client" in fileName: 
+                config = json.load(open(fileName))
+                if not (config["client_id"] and config["client_secret"]):
+                    print "Check user_config.json or client_config.json\n"
+                    return   
+                api_client = BCDmanAPIClient.build_client_from_client_id_secret(config["client_id"], config["client_secret"]) 
+                if api_client:
+                    return api_client
+
+            elif "user" in fileName: 
+                config = json.load(open(fileName))
+                api_client = BCDmanAPIClient.build_client_from_username_password(config["app_token"], config["username"], config["password"])
+                authorized = api_client.check_authorization()
+                if authorized:
+                    return api_client
+        except:
+            print "Check config file in configs/ directory"
+            print "Check user_config.json or client_config.json\n"
+               
 
     @staticmethod
     def build_client_from_client_id_secret(client_id, client_secret, verbose = True):
-         api_client = BCAPIClient(verbose=verbose)
+         api_client = BCDmanAPIClient(verbose=verbose)
          return api_client.build_from_client_id_secret(client_id, client_secret)
 
     @staticmethod
     def build_client_from_username_password(app_token, username, password, verbose = True):
-         api_client = BCAPIClient(verbose=verbose)
+         api_client = BCDmanAPIClient(verbose=verbose)
          return api_client.build_from_username_password(app_token, username, password)
     
     def __init__(self, verbose = False):
@@ -82,8 +129,12 @@ class BCAPIClient(object):
         url = self.base_url + "sites/" + site_id
         return self.get_object("site", site_id, url)
 
-    def get_sites(self, team_id, page=1, per_page=100):
-        url = self.base_url + "sites?teamID=" + team_id + "&page=" + str(page) + "&perPage=" + str(per_page)
+    def get_sites(self, team_id=None, site_id=None, page=1, per_page=100):
+        url = self.base_url + "sites?page=" + str(page) + "&perPage=" + str(per_page)
+        if team_id:
+            url += "&teamID=" + team_id
+        elif site_id:
+            url += "&siteID=" + site_id
         return self.get_objects("sites", url)
 
     def paginate_sites(self, team_id):
@@ -132,7 +183,7 @@ class BCAPIClient(object):
 
     def patch_beacon(self, beacon_id, body):
         if self.verbose: 
-            print "puting beacon " + beacon_id
+            print "patching beacon " + beacon_id
 
         parsed = None
         try:

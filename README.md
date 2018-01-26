@@ -1,65 +1,53 @@
-# bluecats-python-api-client
+# bluecats-python-dman-api-client
 
+This is an example of using the BlueCats Python Device Management Web API. 
+To install the bcdmanpiclient module, copy these commands into your terminal. 
+
+```python
+
+git clone https://github.com/bluecats/bluecats-python-dman-api-client.git
+cd bluecats-python-dman-api-client
+python setup.py install 
+
+```
+
+Once you install the module, you will need to give the API credentials.
 
 ### Obtaining Credentials
-This is an example of using the BlueCats Web API. Once you download the script, you will need to give the API some credentials. To obtain those credentials:
+ To obtain those credentials:
 
 1. Go to the [BlueCats Web App](https://app.bluecats.com)
-2. Create an app. 
-3. Give a name to your app. For your API credentials: 
-4.  Once you create your app, click "Show App Token/Secret"
-5. Write down the *APP Token*
+2. Go to the app tab then "Create a new app" 
+3. Give a name to your app. 
+4. Select the platform: API Client
+5. Once you create your app, click "Show App Token/Secret"
+6. Click "Reset Client Secret"
+7. Write down the Client Id and Client Secret
 
 
-Add your BlueCats Web App email, password, and your recently acquired app-token as strings. For example:
-
-```python
-app_token="nas29204uasidjasoidnas"
-email="email@gmail.com"
-password="sajdopasjqf"
-```
-
-
-### Obtaining IDs 
-Once you enter the app token and username, password, run the 
-script in your preferred way of running it. 
+Add your client id and clientsecret as strings in the file *client_configs.json* found in your configs folder. For example:
 
 ```python
-python api_main.py
+{
+	
+"client_id": "12093A12093B-10293A10293-1203920",
+"client_secret": "123912-219030921-12EF901"
+
+}
+
 ```
 
+Save that file and now you are ready to run the module. 
 
-You will get a list of all team names and ids. For obtaining other types of information, pick ONLY one parameter as string leave the rest as *None*.
-
-- Set the team_id={team id} as a *string* for all Beacons in that team
-- Set the site_id={site id} as a *string* for for all Beacons in that site
-- Set the list_sites={team id} as a *string* for to list all site names and the site ids
-- Set team id, site id, list sites to *None* for to list all team names and team ids
-
-For example:
+To see an example of using bcdmanapiclient, go to the examples folder. In your favorite python interpreter run the script "fan_out_beacons.py" or run this command in your terminal. 
 
 ```python
-team_id = "apsodnapsofnaspofn"
-site_id = None
-list_sites = None
+
+cd examples 
+python fan_out_beacons.py 
+
 ```
 
-After calling the script with a site_id or team_id, you will receive a list of Beacons. After the Beacons are processed and paginated, this line is called to filter a lot of the data. 
-
-```python
-flat_device = BCObjectFlatteners.flatten_beacon(device)
-print flat_device 
-```
-
-If you want all of the information for the Beacons and to filter it yourself, remove or comment out that function and add print device like so:
-
-```python
-#flat_device = BCObjectFlatteners.flatten_beacon(device)
-#print flat_device
-print device
-```
 
 This is a very simple example to show you how to use the BlueCats API. If you have any questions email: ernie@bluecats.com
-
-
 
