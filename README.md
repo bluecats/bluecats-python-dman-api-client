@@ -3,11 +3,11 @@
 This is an example of using the BlueCats Python Device Management Web API. 
 To install the bcdmanpiclient module, copy these commands into your terminal. 
 
-```python
+```
 
 git clone https://github.com/bluecats/bluecats-python-dman-api-client.git
 cd bluecats-python-dman-api-client
-python setup.py install 
+sudo python setup.py install 
 
 ```
 
@@ -25,9 +25,9 @@ Once you install the module, you will need to give the API credentials.
 7. Write down the Client Id and Client Secret
 
 
-Add your client id and clientsecret as strings in the file *client_configs.json* found in your configs folder. For example:
+Add your client id and client secret as strings in the file "client_configs.json" found in your configs folder. For example:
 
-```python
+```
 {
 	
 "client_id": "12093A12093B-10293A10293-1203920",
@@ -41,7 +41,7 @@ Save that file and now you are ready to run the module.
 
 To see an example of using bcdmanapiclient, go to the examples folder. In your favorite python interpreter run the script "fan_out_beacons.py" or run this command in your terminal. 
 
-```python
+```
 
 cd examples 
 python fan_out_beacons.py 
