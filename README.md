@@ -1,20 +1,32 @@
 # bluecats-python-dman-api-client
 
-This is an example of using the BlueCats Python Device Management Web API. 
-To install the bcdmanpiclient module, copy these commands into your terminal. 
+The bcdmanpiclient module allows you to interact with the BlueCats API using Python. 
+
+## Getting Started 
+
+This section will outline how to clone the repo and install the bcdmanpiclient module. 
+
+### Prerequisites
+
+- python (2.7)
+- pip (for python 2.7)
+
+### Installing 
+
+Navigate to your base directory and run the following.
 
 ```
 
 git clone https://github.com/bluecats/bluecats-python-dman-api-client.git
 cd bluecats-python-dman-api-client
-sudo python setup.py install 
+pip install .
 
 ```
 
 Once you install the module, you will need to give the API credentials.
 
 ### Obtaining Credentials
- To obtain those credentials:
+To obtain those credentials:
 
 1. Go to the [BlueCats Web App](https://app.bluecats.com)
 2. Go to the app tab then "Create a new app" 
