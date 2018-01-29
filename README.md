@@ -42,8 +42,8 @@ Add your client id and client secret as strings in the file "client_configs.json
 ```
 {
 	
-"client_id": "12093A12093B-10293A10293-1203920",
-"client_secret": "123912-219030921-12EF901"
+"client_id": "{client_id}",
+"client_secret": "{client_secret}"
 
 }
 
