@@ -20,8 +20,6 @@ def fan_out_beacons():
 	
 	print json.dumps(siteJSON, indent=4, sort_keys=True)
 
-
-api_client = BCDmanAPIClient.login_from_config("../configs/client_config.json")
-
+api_client = BCDmanAPIClient.login_from_client_config(verbose=True)
 if api_client:
 	fan_out_beacons()

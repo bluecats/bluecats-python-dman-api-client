@@ -21,9 +21,7 @@ def patch_beacons():
 		else:
 			print "patched beacons" 
 
-
-api_client = BCDmanAPIClient.login_from_config("../configs/client_config.json")
-
+api_client = BCDmanAPIClient.login_from_client_config()
 if api_client:
 	patch_beacons()
 

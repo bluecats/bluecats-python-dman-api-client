@@ -37,7 +37,7 @@ To obtain those credentials:
 7. Write down the Client Id and Client Secret
 
 
-Add your client id and client secret as strings in the file "client_configs.json" found in your configs folder. For example:
+Add your client id and client secret as strings in the file "client_config.json" found in your examples configs folder. For example:
 
 ```
 {
