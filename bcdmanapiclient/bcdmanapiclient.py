@@ -126,7 +126,7 @@ class BCDmanAPIClient(object):
                     else:
                         print "user not authorized"
                 else:
-                    print "access_token required"
+                    print "app_token, username, and password required"
             else:
                 print "configs directory not found"
         except:
@@ -176,6 +176,7 @@ class BCDmanAPIClient(object):
             config_dir = os.path.join(cur_dir,'configs')
             if os.path.exists(config_dir):
                 shutil.rmtree(config_dir)
+            print "removed all configs"
         except:
             print "failed to delete all configs" 
 
