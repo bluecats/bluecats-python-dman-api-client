@@ -11,7 +11,7 @@ class BCDmanAPIClient(object):
     headers = None
 
     @staticmethod
-    def login_from_app_token(app_token, verbose=False):
+    def login_from_app_token(app_token, configs_dir=None, verbose=False):
         username = None
         password = None
         authorized = False
@@ -29,14 +29,14 @@ class BCDmanAPIClient(object):
                     if authorized:
                         answer = raw_input("do you want to save your credentials? YES/no:")
                         if not answer or len(answer) > 0 and answer.lower() == 'yes':
-                            BCDmanAPIClient.save_user_config(app_token, username, password)
+                            BCDmanAPIClient.save_user_config(app_token, username, password, configs_dir=configs_dir)
                     return api_client
                 if not authorized:
                     print "sorry, try again or use Ctrl-D to exit"
                     username = None
                     password = None
 
-    def login_from_client_id(client_id, verbose=False):
+    def login_from_client_id(client_id, configs_dir=None, verbose=False):
         username = None
         password = None
         authorized = False
@@ -55,7 +55,7 @@ class BCDmanAPIClient(object):
                         if access_token:
                             answer = raw_input("do you want to save your access token? YES/no:")
                             if not answer or len(answer) > 0 and answer.lower() == 'yes':
-                                BCDmanAPIClient.save_access_token_config(access_token)
+                                BCDmanAPIClient.save_access_token_config(access_token, configs_dir=configs_dir)
                         return api_client
                 if not authorized:
                     print "sorry, try again or use Ctrl-D to exit"
@@ -63,18 +63,18 @@ class BCDmanAPIClient(object):
                     password = None
 
     @staticmethod
-    def save_user_config(app_token, username, password):
+    def save_user_config(app_token, username, password, configs_dir=None):
         try:
             data = {
                 'app_token':app_token,
                 'username':username,
                 'password':password
             }
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if not os.path.exists(config_dir):
-                os.makedirs(config_dir)
-            filename = os.path.join(config_dir, 'user_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if not os.path.exists(configs_dir):
+                os.makedirs(configs_dir)
+            filename = os.path.join(configs_dir, 'user_config.json')
             with open(filename, 'w') as f:
                 json.dump(data, f)
             print "saved user config"
@@ -82,14 +82,14 @@ class BCDmanAPIClient(object):
             print "failed to save user config"
 
     @staticmethod
-    def save_access_token_config(access_token):
+    def save_access_token_config(access_token, configs_dir=None):
         try:
             data = {'access_token':access_token}
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if not os.path.exists(config_dir):
-                os.makedirs(config_dir)
-            filename = os.path.join(config_dir, 'access_token_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if not os.path.exists(configs_dir):
+                os.makedirs(configs_dir)
+            filename = os.path.join(configs_dir, 'access_token_config.json')
             with open(filename, 'w') as f:
                 json.dump(data, f)
             print "saved access token config"
@@ -97,14 +97,14 @@ class BCDmanAPIClient(object):
             print "failed to save access token config"
 
     @staticmethod
-    def save_client_config(client_id, client_secret):
+    def save_client_config(client_id, client_secret, configs_dir=None):
         try:
             data = {'client_id':client_id,'client_secret':client_secret}
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if not os.path.exists(config_dir):
-                os.makedirs(config_dir)
-            filename = os.path.join(config_dir, 'client_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if not os.path.exists(configs_dir):
+                os.makedirs(configs_dir)
+            filename = os.path.join(configs_dir, 'client_config.json')
             with open(filename, 'w') as f:
                 json.dump(data, f)
             print "saved client config"
@@ -112,12 +112,12 @@ class BCDmanAPIClient(object):
             print "failed to save client config"
 
     @staticmethod
-    def login_from_user_config(verbose=False):
+    def login_from_user_config(configs_dir=None, verbose=False):
         try: 
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if os.path.exists(config_dir):
-                filename = os.path.join(config_dir, 'user_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if os.path.exists(configs_dir):
+                filename = os.path.join(configs_dir, 'user_config.json')
                 config = json.load(open(filename))
                 if 'app_token' in config and 'username' in config and 'password' in config:
                     api_client = BCDmanAPIClient.build_client_from_app_token_username_password(config['app_token'], config['username'], config['password'])
@@ -132,12 +132,12 @@ class BCDmanAPIClient(object):
         except:
             print "failed to load user_config.json in configs directory"
 
-    def login_from_acess_token_config(verbose=False):
+    def login_from_acess_token_config(configs_dir=None, verbose=False):
         try: 
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if os.path.exists(config_dir):
-                filename = os.path.join(config_dir, 'access_token_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if os.path.exists(configs_dir):
+                filename = os.path.join(configs_dir, 'access_token_config.json')
                 config = json.load(open(filename))
                 if 'access_token' in config:
                     api_client = BCDmanAPIClient.build_client_from_auth_token(config['access_token'])
@@ -153,12 +153,12 @@ class BCDmanAPIClient(object):
             print "failed to load acess_token_config.json in configs directory"
 
     @staticmethod
-    def login_from_client_config(verbose=False):
+    def login_from_client_config(configs_dir=None, verbose=False):
         try: 
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if os.path.exists(config_dir):
-                filename = os.path.join(config_dir, 'client_config.json')
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if os.path.exists(configs_dir):
+                filename = os.path.join(configs_dir, 'client_config.json')
                 config = json.load(open(filename))
                 if 'client_id' in config and 'client_secret' in config:  
                     return BCDmanAPIClient.build_client_from_client_id_secret(config["client_id"], config["client_secret"])
@@ -170,15 +170,20 @@ class BCDmanAPIClient(object):
             print "failed to load client_config.json in configs directory"      
 
     @staticmethod
-    def remove_all_configs():
+    def remove_configs_dir(configs_dir=None):
         try:
-            cur_dir = os.getcwd()
-            config_dir = os.path.join(cur_dir,'configs')
-            if os.path.exists(config_dir):
-                shutil.rmtree(config_dir)
-            print "removed all configs"
+            if configs_dir is None:
+                configs_dir = get_default_configs_dir()
+            if os.path.exists(configs_dir):
+                shutil.rmtree(configs_dir)
+            print "removed configs dir"
         except:
-            print "failed to delete all configs" 
+            print "failed to remove configs dir" 
+
+    staticmethod
+    def get_default_configs_dir():
+        cur_dir = os.getcwd()
+        return os.path.join(cur_dir,'configs')
 
     @staticmethod
     def build_client_from_client_id_secret(client_id, client_secret, verbose=True):
