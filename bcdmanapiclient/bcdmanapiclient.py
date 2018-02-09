@@ -4,6 +4,9 @@ import json
 import getpass
 import os
 import shutil
+import logging
+
+logger = logging.getLogger("dman")
 
 class BCDmanAPIClient(object):
 
@@ -258,18 +261,16 @@ class BCDmanAPIClient(object):
         return self
 
     def check_user_authorization(self):
-        if self.verbose: 
-            print "checking bluecats dman api authorization"
+        logger.debug("checking bluecats dman api authorization")
 
         url = self.base_url + "account/verifycredentials"
         r = requests.get(url, headers=self.headers, verify=True)
         authorized = r.status_code == requests.codes.ok
         
-        if self.verbose:
-            if authorized:
-                print "authorized"
-            else:
-                print "authorization failed - status_code:" + str(r.status_code)
+        if authorized:
+            logger.debug("authorized")
+        else:
+            logger.debug("authorization failed - status_code:" + str(r.status_code))
         
         return authorized
 
@@ -311,14 +312,14 @@ class BCDmanAPIClient(object):
                 base64.b64encode(water),
                 base64.b64encode(encrypted_status)
                 )
-        print 'get_milk, url =', url
+        logger.debug('get_milk, url = %s', str(url))
         return self.get_object("milk", beacon_id, url)
 
     def get_firmware(self, beacon_id, version, encrypted_status):
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
                 self.base_url, beacon_id, version, base64.b64encode(encrypted_status)
                 )
-        print 'get firmware, url =', url
+        logger.debug('get firmware, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
         return (r.status_code, r.content)
 
@@ -342,8 +343,7 @@ class BCDmanAPIClient(object):
         return self.paginate_objects("beacons", url_lambda)
 
     def patch_beacon(self, beacon_id, body):
-        if self.verbose: 
-            print "patching beacon " + beacon_id
+        logger.debug("patching beacon " + beacon_id)
 
         parsed = None
         try:
@@ -357,8 +357,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def put_beacon(self, beacon_id, body):
-        if self.verbose: 
-            print "putting beacon " + beacon_id
+        logger.debug("putting beacon " + beacon_id)
 
         parsed = None
         try:
@@ -371,8 +370,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_pack(self, claim_code):
-        if self.verbose: 
-            print "getting pack " + claim_code
+        logger.debug("getting pack " + claim_code)
 
         parsed = None
         try:
@@ -385,8 +383,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_modes(self, beacon_id):
-        if self.verbose: 
-            print "getting beacon modes for beacon " + beacon_id
+        logger.debug("getting beacon modes for beacon " + beacon_id)
 
         parsed = None
         try:
@@ -399,8 +396,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_regions(self, region_id):
-        if self.verbose: 
-            print "checking beacon region IDs for beacon " + region_id
+        logger.debug("checking beacon region IDs for beacon " + region_id)
 
         parsed = None
         try:
@@ -414,8 +410,7 @@ class BCDmanAPIClient(object):
 
 
     def get_target_speeds(self, beacon_id):
-        if self.verbose: 
-            print "getting target speeds for beacon " + beacon_id
+        logger.debug("getting target speeds for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/targetspeeds"
@@ -427,8 +422,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_loudnesses(self, beacon_id):
-        if self.verbose: 
-            print "getting beacon loudnesses for beacon " + beacon_id
+        logger.debug("getting beacon loudnesses for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/beaconloudnesses"
@@ -440,8 +434,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_futuresettings(self, beacon_id, encrypted_status):
-        if self.verbose: 
-            print "getting future settings for beacon " + beacon_id
+        logger.debug("getting future settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
@@ -453,9 +446,8 @@ class BCDmanAPIClient(object):
             self.print_error("get future settings for beacon " + beacon_id + " failed", r.status_code, parsed) 
             return (r.status_code, None)
 
-    def get_beacon_settings(self, beacon_id, encrypted_status):
-        if self.verbose: 
-            print "getting settings for beacon " + beacon_id
+    def get_beacon_settings(self, beacon_id, encrypted_status): 
+        logger.debug("getting settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + base64.b64encode(encrypted_status)
@@ -467,8 +459,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def confirm_beacon_settings(self, beacon_id, encrypted_status):
-        if self.verbose: 
-            print "confirming settings for beacon " + beacon_id
+        logger.debug("confirming settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/confirm?status=" + base64.b64encode(encrypted_status)
@@ -479,8 +470,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, False)
 
     def confirm_beacon_firmware(self, beacon_id, encrypted_status):
-        if self.verbose: 
-            print "confirming firmware for beacon " + beacon_id
+        logger.debug("confirming firmware for beacon " + beacon_id)
 
         try:
             print "encrypted_status:", encrypted_status
@@ -497,9 +487,8 @@ class BCDmanAPIClient(object):
         url = self.base_url + "devices/" + device_id
         return self.get_object("device", device_id, url)
 
-    def get_devices(self, team_id=None, site_id=None, page=1, per_page=100):
-        if self.verbose: 
-            print "getting devices"
+    def get_devices(self, team_id=None, site_id=None, page=1, per_page=100): 
+        logger.debug("getting devices")
 
         parsed = None
         try:
@@ -518,9 +507,8 @@ class BCDmanAPIClient(object):
     def paginate_devices(self, team_id=None, site_id=None):
         return self.paginate_objects("device", lambda page,per_page: self.get_devices(team_id=team_id, site_id=site_id, page=page, per_page=per_page))
 
-    def patch_device(self, device_id, body):
-        if self.verbose: 
-            print "patching device " + device_id
+    def patch_device(self, device_id, body): 
+        logger.debug("patching device " + device_id)
 
         parsed = None
         try:
@@ -533,8 +521,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
     
     def get_object(self, object_key, object_id, get_object_url):
-        if self.verbose: 
-            print "getting " + object_key + " " + object_id
+        logger.debug("getting " + object_key + " " + object_id)
 
         parsed = None
         try:
@@ -546,8 +533,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_objects(self, objects_key, get_objects_url):
-        if self.verbose: 
-            print "getting " + objects_key
+        logger.debug("getting " + objects_key)
 
         parsed = None
         try:
@@ -560,8 +546,7 @@ class BCDmanAPIClient(object):
 
 
     def paginate_objects(self, objects_key, get_objects_url_lambda):
-        if self.verbose: 
-            print "paginating " + objects_key
+        logger.debug("paginating " + objects_key)
 
         objects = []
         next_page = 1
@@ -574,8 +559,7 @@ class BCDmanAPIClient(object):
                 objects.extend(next_objects)
                 next_page = pagination["page"] + 1
                 page_count = pagination["pageCount"]
-                if self.verbose:
-                    print "page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key
+                logger.debug("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
             else:
                 return (False, objects)
 
