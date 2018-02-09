@@ -31,18 +31,20 @@ class BCDmanAPIClient(object):
             if not username or not password:
                 print "sorry, try again or use Ctrl-D to exit"
             else:
+                access_token = None
                 api_client = None
                 if app_token:
                     api_client = BCDmanAPIClient.build_client_from_app_token_username_password(app_token, username, password, verbose=verbose)
                 else:
-                    api_client = BCDmanAPIClient.build_client_from_client_id_username_password(client_id, username, password, verbose=verbose)
-                
+                    api_client, access_token = BCDmanAPIClient.build_client_from_client_id_username_password(client_id, username, password, verbose=verbose)
+
                 if api_client:
                     authorized = api_client.check_user_authorization()
                     if authorized:
-                        answer = raw_input("do you want to save your credentials? YES/no:")
-                        if not answer or len(answer) > 0 and answer.lower() == 'yes':
-                            BCDmanAPIClient.save_user_config(username, password, app_token=app_token, client_id=client_id)
+                        if access_token:
+                            answer = raw_input("do you want to save your token? YES/no:")
+                            if not answer or len(answer) > 0 and answer.lower() == 'yes':
+                                BCDmanAPIClient.save_user_config(access_token)
                         return api_client
 
                 if not authorized:
@@ -51,24 +53,19 @@ class BCDmanAPIClient(object):
                     password = None
 
     @staticmethod
-    def save_user_config(username, password, app_token=None, client_id=None):
+    def save_user_config(access_token):
         try:
-            data = {'username':username,'password':password}
-            if app_token:
-                data['app_token'] = app_token
-            if client_id:
-                data['client_id'] = client_id
+            data = {'access_token':access_token}
             cur_dir = os.getcwd()
             config_dir = os.path.join(cur_dir,'configs')
             if not os.path.exists(config_dir):
                 os.makedirs(config_dir)
             filename = os.path.join(config_dir, 'user_config.json')
-
             with open(filename, 'w') as f:
                 json.dump(data, f)
             print "saved user config"
         except:
-            print "failed to save user config 1"
+            print "failed to save user config"
 
     @staticmethod
     def save_client_config(client_id, client_secret):
@@ -95,29 +92,18 @@ class BCDmanAPIClient(object):
             if os.path.exists(config_dir):
                 filename = os.path.join(config_dir, 'user_config.json')
                 config = json.load(open(filename))
-                if 'username' not in config or 'password' not in config:
-                    raise
-                app_token = None
-                if 'app_token' in config:
-                    app_token = config['app_token']
-                client_id = None
-                if 'client_id' in config:
-                    client_id = config['client_id']
-                
-                api_client = None
-                if app_token:
-                    api_client = BCDmanAPIClient.build_client_from_app_token_username_password(app_token, config["username"], config["password"])
-                elif client_id:
-                    api_client = BCDmanAPIClient.build_client_from_client_id_username_password(client_id, config["username"], config["password"])
+                if 'access_token' in config:
+                    api_client = BCDmanAPIClient.build_client_from_auth_token(config['access_token'])
+                    if api_client.check_user_authorization():
+                        return api_client
+                    else:
+                        print "user not authorized"
                 else:
-                    raise
-                if not api_client.check_user_authorization():
-                    raise
-                return api_client
+                    print "access_token required"
             else:
-                raise
+                print "configs directory not found"
         except:
-            print "Check user_config.json file in configs/ directory"
+            print "failed to load user_config.json file in configs directory"
 
     @staticmethod
     def login_from_client_config(verbose=False):
@@ -186,16 +172,26 @@ class BCDmanAPIClient(object):
         r = requests.post(url, data=data, verify=True)
         if r.status_code == requests.codes.ok:
             parsed = r.json()
-            auth_header_val = "Bearer " + parsed['access_token']
+            access_token = parsed['access_token']
+            auth_header_val = "Bearer " + access_token
             self.headers = {
             'Content-Type': "application/json",
             'Authorization': auth_header_val,
             'X-Api-Version': "3"
             }
-            return self
+            return (self, access_token)
         else:
             print "user auth failed"
-            return None
+            return (None, None)
+
+    def build_from_access_token(self, caccess_token):
+        auth_header_val = "Bearer " + parsed['access_token']
+        self.headers = {
+        'Content-Type': "application/json",
+        'Authorization': auth_header_val,
+        'X-Api-Version': "3"
+        }
+        return self
 
     def check_user_authorization(self):
         if self.verbose: 
