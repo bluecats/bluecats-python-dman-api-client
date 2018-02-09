@@ -3,6 +3,7 @@ import base64
 import json
 import getpass
 import os
+import shutil
 
 class BCDmanAPIClient(object):
 
@@ -167,6 +168,16 @@ class BCDmanAPIClient(object):
                 print "configs directory not found"
         except:
             print "failed to load client_config.json in configs directory"      
+
+    @staticmethod
+    def remove_all_configs:
+        try:
+            cur_dir = os.getcwd()
+            config_dir = os.path.join(cur_dir,'configs')
+            if os.path.exists(config_dir):
+                shutil.rmtree(config_dir)
+        except:
+            print "failed to delete all configs" 
 
     @staticmethod
     def build_client_from_client_id_secret(client_id, client_secret, verbose=True):
