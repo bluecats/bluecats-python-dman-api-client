@@ -170,7 +170,7 @@ class BCDmanAPIClient(object):
             print "failed to load client_config.json in configs directory"      
 
     @staticmethod
-    def remove_all_configs:
+    def remove_all_configs():
         try:
             cur_dir = os.getcwd()
             config_dir = os.path.join(cur_dir,'configs')
