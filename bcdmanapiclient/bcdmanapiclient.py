@@ -71,7 +71,7 @@ class BCDmanAPIClient(object):
                 'username':username,
                 'password':password
             }
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'user_config.json')
@@ -85,7 +85,7 @@ class BCDmanAPIClient(object):
     def save_access_token_config(access_token, configs_dir=None):
         try:
             data = {'access_token':access_token}
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'access_token_config.json')
@@ -99,7 +99,7 @@ class BCDmanAPIClient(object):
     def save_client_config(client_id, client_secret, configs_dir=None):
         try:
             data = {'client_id':client_id,'client_secret':client_secret}
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'client_config.json')
@@ -112,7 +112,7 @@ class BCDmanAPIClient(object):
     @staticmethod
     def login_from_user_config(configs_dir=None, verbose=False):
         try: 
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'user_config.json')
                 config = json.load(open(filename))
@@ -131,12 +131,12 @@ class BCDmanAPIClient(object):
 
     def login_from_acess_token_config(configs_dir=None, verbose=False):
         try: 
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'access_token_config.json')
                 config = json.load(open(filename))
                 if 'access_token' in config:
-                    api_client = BCDmanAPIClient.build_client_from_auth_token(config['access_token'])
+                    api_client = BCDmanAPIClient.build_from_access_token(config['access_token'])
                     if api_client.check_user_authorization():
                         return api_client
                     else:
@@ -151,7 +151,7 @@ class BCDmanAPIClient(object):
     @staticmethod
     def login_from_client_config(configs_dir=None, verbose=False):
         try: 
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'client_config.json')
                 config = json.load(open(filename))
@@ -167,14 +167,14 @@ class BCDmanAPIClient(object):
     @staticmethod
     def remove_configs_dir(configs_dir=None):
         try:
-            configs_dir = configs_dir or get_default_configs_dir()
+            configs_dir = configs_dir or BCDmanAPIClient.get_default_configs_dir()
             if os.path.exists(configs_dir):
                 shutil.rmtree(configs_dir)
             print "removed configs dir"
         except:
             print "failed to remove configs dir" 
 
-    staticmethod
+    @staticmethod
     def get_default_configs_dir():
         cur_dir = os.getcwd()
         return os.path.join(cur_dir,'configs')
@@ -243,8 +243,8 @@ class BCDmanAPIClient(object):
             print "user auth failed"
             return (None, None)
 
-    def build_from_access_token(self, caccess_token):
-        auth_header_val = "Bearer " + parsed['access_token']
+    def build_from_access_token(self, access_token):
+        auth_header_val = "Bearer " + access_token
         self.headers = {
         'Content-Type': "application/json",
         'Authorization': auth_header_val,
