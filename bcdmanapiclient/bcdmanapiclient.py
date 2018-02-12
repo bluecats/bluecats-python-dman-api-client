@@ -6,8 +6,6 @@ import os
 import shutil
 import logging
 
-logger = logging.getLogger("dman")
-
 class BCDmanAPIClient(object):
 
     base_url = "https://api.bluecats.com/"
@@ -73,8 +71,7 @@ class BCDmanAPIClient(object):
                 'username':username,
                 'password':password
             }
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'user_config.json')
@@ -88,8 +85,7 @@ class BCDmanAPIClient(object):
     def save_access_token_config(access_token, configs_dir=None):
         try:
             data = {'access_token':access_token}
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'access_token_config.json')
@@ -103,8 +99,7 @@ class BCDmanAPIClient(object):
     def save_client_config(client_id, client_secret, configs_dir=None):
         try:
             data = {'client_id':client_id,'client_secret':client_secret}
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if not os.path.exists(configs_dir):
                 os.makedirs(configs_dir)
             filename = os.path.join(configs_dir, 'client_config.json')
@@ -117,8 +112,7 @@ class BCDmanAPIClient(object):
     @staticmethod
     def login_from_user_config(configs_dir=None, verbose=False):
         try: 
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'user_config.json')
                 config = json.load(open(filename))
@@ -137,8 +131,7 @@ class BCDmanAPIClient(object):
 
     def login_from_acess_token_config(configs_dir=None, verbose=False):
         try: 
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'access_token_config.json')
                 config = json.load(open(filename))
@@ -158,8 +151,7 @@ class BCDmanAPIClient(object):
     @staticmethod
     def login_from_client_config(configs_dir=None, verbose=False):
         try: 
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if os.path.exists(configs_dir):
                 filename = os.path.join(configs_dir, 'client_config.json')
                 config = json.load(open(filename))
@@ -175,8 +167,7 @@ class BCDmanAPIClient(object):
     @staticmethod
     def remove_configs_dir(configs_dir=None):
         try:
-            if configs_dir is None:
-                configs_dir = get_default_configs_dir()
+            configs_dir = configs_dir or get_default_configs_dir()
             if os.path.exists(configs_dir):
                 shutil.rmtree(configs_dir)
             print "removed configs dir"
@@ -203,7 +194,8 @@ class BCDmanAPIClient(object):
          api_client = BCDmanAPIClient(verbose=verbose)
          return api_client.build_from_client_id_username_password(client_id, username, password)
     
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, logger=None):
+        self.logger = logger or logging.getLogger()
         self.verbose = verbose
 
     def print_error(self, message, status_code, parsed = None):
@@ -261,16 +253,16 @@ class BCDmanAPIClient(object):
         return self
 
     def check_user_authorization(self):
-        logger.debug("checking bluecats dman api authorization")
+        self.logger.debug("checking bluecats dman api authorization")
 
         url = self.base_url + "account/verifycredentials"
         r = requests.get(url, headers=self.headers, verify=True)
         authorized = r.status_code == requests.codes.ok
         
         if authorized:
-            logger.debug("authorized")
+            self.logger.debug("authorized")
         else:
-            logger.debug("authorization failed - status_code:" + str(r.status_code))
+            self.logger.debug("authorization failed - status_code:" + str(r.status_code))
         
         return authorized
 
@@ -312,14 +304,14 @@ class BCDmanAPIClient(object):
                 base64.b64encode(water),
                 base64.b64encode(encrypted_status)
                 )
-        logger.debug('get_milk, url = %s', str(url))
+        self.logger.debug('get_milk, url = %s', str(url))
         return self.get_object("milk", beacon_id, url)
 
     def get_firmware(self, beacon_id, version, encrypted_status):
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
                 self.base_url, beacon_id, version, base64.b64encode(encrypted_status)
                 )
-        logger.debug('get firmware, url = %s', str(url))
+        self.logger.debug('get firmware, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
         return (r.status_code, r.content)
 
@@ -343,7 +335,7 @@ class BCDmanAPIClient(object):
         return self.paginate_objects("beacons", url_lambda)
 
     def patch_beacon(self, beacon_id, body):
-        logger.debug("patching beacon " + beacon_id)
+        self.logger.debug("patching beacon " + beacon_id)
 
         parsed = None
         try:
@@ -357,7 +349,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def put_beacon(self, beacon_id, body):
-        logger.debug("putting beacon " + beacon_id)
+        self.logger.debug("putting beacon " + beacon_id)
 
         parsed = None
         try:
@@ -370,7 +362,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_pack(self, claim_code):
-        logger.debug("getting pack " + claim_code)
+        self.logger.debug("getting pack " + claim_code)
 
         parsed = None
         try:
@@ -383,7 +375,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_modes(self, beacon_id):
-        logger.debug("getting beacon modes for beacon " + beacon_id)
+        self.logger.debug("getting beacon modes for beacon " + beacon_id)
 
         parsed = None
         try:
@@ -396,7 +388,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_regions(self, region_id):
-        logger.debug("checking beacon region IDs for beacon " + region_id)
+        self.logger.debug("checking beacon region IDs for beacon " + region_id)
 
         parsed = None
         try:
@@ -410,7 +402,7 @@ class BCDmanAPIClient(object):
 
 
     def get_target_speeds(self, beacon_id):
-        logger.debug("getting target speeds for beacon " + beacon_id)
+        self.logger.debug("getting target speeds for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/targetspeeds"
@@ -422,7 +414,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_loudnesses(self, beacon_id):
-        logger.debug("getting beacon loudnesses for beacon " + beacon_id)
+        self.logger.debug("getting beacon loudnesses for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/beaconloudnesses"
@@ -434,7 +426,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_futuresettings(self, beacon_id, encrypted_status):
-        logger.debug("getting future settings for beacon " + beacon_id)
+        self.logger.debug("getting future settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
@@ -447,7 +439,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_beacon_settings(self, beacon_id, encrypted_status): 
-        logger.debug("getting settings for beacon " + beacon_id)
+        self.logger.debug("getting settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + base64.b64encode(encrypted_status)
@@ -459,7 +451,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def confirm_beacon_settings(self, beacon_id, encrypted_status):
-        logger.debug("confirming settings for beacon " + beacon_id)
+        self.logger.debug("confirming settings for beacon " + beacon_id)
 
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/confirm?status=" + base64.b64encode(encrypted_status)
@@ -470,7 +462,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, False)
 
     def confirm_beacon_firmware(self, beacon_id, encrypted_status):
-        logger.debug("confirming firmware for beacon " + beacon_id)
+        self.logger.debug("confirming firmware for beacon " + beacon_id)
 
         try:
             print "encrypted_status:", encrypted_status
@@ -488,7 +480,7 @@ class BCDmanAPIClient(object):
         return self.get_object("device", device_id, url)
 
     def get_devices(self, team_id=None, site_id=None, page=1, per_page=100): 
-        logger.debug("getting devices")
+        self.logger.debug("getting devices")
 
         parsed = None
         try:
@@ -508,7 +500,7 @@ class BCDmanAPIClient(object):
         return self.paginate_objects("device", lambda page,per_page: self.get_devices(team_id=team_id, site_id=site_id, page=page, per_page=per_page))
 
     def patch_device(self, device_id, body): 
-        logger.debug("patching device " + device_id)
+        self.logger.debug("patching device " + device_id)
 
         parsed = None
         try:
@@ -521,7 +513,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
     
     def get_object(self, object_key, object_id, get_object_url):
-        logger.debug("getting " + object_key + " " + object_id)
+        self.logger.debug("getting " + object_key + " " + object_id)
 
         parsed = None
         try:
@@ -533,7 +525,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def get_objects(self, objects_key, get_objects_url):
-        logger.debug("getting " + objects_key)
+        self.logger.debug("getting " + objects_key)
 
         parsed = None
         try:
@@ -546,7 +538,7 @@ class BCDmanAPIClient(object):
 
 
     def paginate_objects(self, objects_key, get_objects_url_lambda):
-        logger.debug("paginating " + objects_key)
+        self.logger.debug("paginating " + objects_key)
 
         objects = []
         next_page = 1
@@ -559,7 +551,7 @@ class BCDmanAPIClient(object):
                 objects.extend(next_objects)
                 next_page = pagination["page"] + 1
                 page_count = pagination["pageCount"]
-                logger.debug("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
+                self.logger.debug("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
             else:
                 return (False, objects)
 
