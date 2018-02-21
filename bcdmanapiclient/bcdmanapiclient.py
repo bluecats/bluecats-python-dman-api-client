@@ -307,6 +307,14 @@ class BCDmanAPIClient(object):
         self.logger.debug('get_milk, url = %s', str(url))
         return self.get_object("milk", beacon_id, url)
 
+    def get_firmware_info(self, beacon_id, version):
+        url = "%sbeacons/%s/firmware/%s/" % (
+                self.base_url, beacon_id, version, base64.b64encode(encrypted_status)
+                )
+        self.logger.warn('get firmware info, url = %s', str(url))
+        r = requests.get(url, headers=self.headers, verify=True)
+        return (r.status_code, r.content)
+
     def get_firmware(self, beacon_id, version, encrypted_status):
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
                 self.base_url, beacon_id, version, base64.b64encode(encrypted_status)
