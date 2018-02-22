@@ -412,6 +412,7 @@ class BCDmanAPIClient(object):
     def get_target_speeds(self, beacon_id):
         self.logger.debug("getting target speeds for beacon " + beacon_id)
 
+        parsed = None
         try:
             url = self.base_url + "beacons/" + beacon_id + "/targetspeeds"
             r = requests.get(url, headers=self.headers, verify=True)
@@ -424,6 +425,7 @@ class BCDmanAPIClient(object):
     def get_beacon_loudnesses(self, beacon_id):
         self.logger.debug("getting beacon loudnesses for beacon " + beacon_id)
 
+        parsed = None
         try:
             url = self.base_url + "beacons/" + beacon_id + "/beaconloudnesses"
             r = requests.get(url, headers=self.headers, verify=True)
@@ -436,6 +438,7 @@ class BCDmanAPIClient(object):
     def get_beacon_futuresettings(self, beacon_id, encrypted_status):
         self.logger.debug("getting future settings for beacon " + beacon_id)
 
+        parsed = None
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
                         base64.b64encode(encrypted_status) + "&firmwareVersion=latest"
@@ -449,13 +452,14 @@ class BCDmanAPIClient(object):
     def get_beacon_settings(self, beacon_id, encrypted_status): 
         self.logger.debug("getting settings for beacon " + beacon_id)
 
+        parsed = None
         try:
             url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + base64.b64encode(encrypted_status)
             r = requests.get(url, headers=self.headers, verify=True)
             parsed = r.json()
             return (r.status_code, parsed["settings"])
         except:
-            self.print_error("get settings for beacon " + beacon_id + " failed", r.status_code, parsed) 
+            self.print_error("get settings for beacon " + beacon_id + " failed", r.status_code, parsed )
             return (r.status_code, None)
 
     def confirm_beacon_settings(self, beacon_id, encrypted_status):
@@ -542,7 +546,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, parsed[objects_key], parsed["pagination"])
         except:
             self.print_error("get " + objects_key + " failed", r.status_code, parsed) 
-            return (r.status_code, None, None)
+            return r.status_code, None, None
 
 
     def paginate_objects(self, objects_key, get_objects_url_lambda):
