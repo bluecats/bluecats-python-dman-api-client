@@ -3,4 +3,4 @@
 dist/
 bcdmanapiclient.egg-info/
 build/
-
+.idea/
