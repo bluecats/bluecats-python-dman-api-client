@@ -311,7 +311,8 @@ class BCDmanAPIClient(object):
         url = "%sbeacons/%s/firmware/%s/" % (self.base_url, beacon_id, version)
         self.logger.warn('get firmware info, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
-        return r.status_code == requests.codes.ok, r.content
+        parsed = r.json()
+        return r.status_code == requests.codes.ok, parsed
 
     def get_firmware(self, beacon_id, version, encrypted_status):
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
