@@ -312,6 +312,8 @@ class BCDmanAPIClient(object):
         self.logger.warn('get firmware info, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
         parsed = r.json()
+        if 'firmware' in parsed:
+            parsed = parsed['firmware']
         return r.status_code == requests.codes.ok, parsed
 
     def get_firmware(self, beacon_id, version, encrypted_status):
@@ -402,7 +404,7 @@ class BCDmanAPIClient(object):
             url = self.base_url + "beaconRegions/" + region_id
             r = requests.get(url, headers=self.headers, verify=True)
             parsed = r.json()
-            return (r.status_code, parsed["beaconRegion"]["id"])
+            return (r.status_code, parsed["beaconRegions"]["id"])
         except:
             self.print_error("Beacon Region " + region_id + " failed", r.status_code, parsed) 
             return (r.status_code, None)
