@@ -332,7 +332,7 @@ class BCDmanAPIClient(object):
             url += "&siteID=" + site_id
         return self.get_objects("beacons", url)
 
-    def paginate_beacons(self, team_id=None, site_id=None):
+    def paginate_beacons(self, team_id=None, site_id=None, max_page_count=None):
         url = self.base_url + "beacons"
         if team_id:
             url += "?teamID=" + team_id + "&"
@@ -340,8 +340,11 @@ class BCDmanAPIClient(object):
             url += "?siteID=" + site_id + "&"
         else:
             url += "?"
-        url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
-        return self.paginate_objects("beacons", url_lambda)
+        if max_page_count is None:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        else:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        return self.paginate_objects("beacons", url_lambda, max_page_count=max_page_count)
 
     def patch_beacon(self, beacon_id, body):
         self.logger.debug("patching beacon " + beacon_id)
@@ -562,7 +565,7 @@ class BCDmanAPIClient(object):
             return r.status_code, None, None
 
 
-    def paginate_objects(self, objects_key, get_objects_url_lambda):
+    def paginate_objects(self, objects_key, get_objects_url_lambda, max_page_count=None):
         self.logger.debug("paginating " + objects_key)
 
         objects = []
@@ -579,5 +582,9 @@ class BCDmanAPIClient(object):
                 self.logger.debug("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
             else:
                 return (False, objects)
+
+            if max_page_count is not None:
+                if next_page > max_page_count:
+                    return(True, objects)
 
         return (True, objects)
