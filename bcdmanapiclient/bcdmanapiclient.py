@@ -584,7 +584,7 @@ class BCDmanAPIClient(object):
                 return (False, objects)
 
             if max_page_count is not None:
-                if next_page > max_page_count:
+                if next_page > int(max_page_count):
                     return(True, objects)
 
         return (True, objects)
