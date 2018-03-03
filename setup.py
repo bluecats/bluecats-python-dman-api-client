@@ -1,7 +1,7 @@
 from distutils.core import setup 
 setup(
 	name="bcdmanapiclient", 
-	version="0.14",
+	version="0.15",
 	packages=["bcdmanapiclient"],
 	description="This is a BlueCats device management api client using python",
 	url = "https://github.com/bluecats/bluecats-python-dman-api-client",
