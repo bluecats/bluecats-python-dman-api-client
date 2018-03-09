@@ -579,7 +579,7 @@ class BCDmanAPIClient(object):
                 objects.extend(next_objects)
                 next_page = pagination["page"] + 1
                 page_count = pagination["pageCount"]
-                self.logger.debug("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
+                self.logger.warning("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
             else:
                 return (False, objects)
 
