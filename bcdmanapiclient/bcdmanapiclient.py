@@ -294,8 +294,10 @@ class BCDmanAPIClient(object):
         url_lambda = lambda page,per_page: self.base_url + "sites?teamID=" + team_id + "&page=" + str(page) + "&perPage=" + str(per_page)
         return self.paginate_objects("sites", url_lambda)
 
-    def get_beacon(self, beacon_id):
+    def get_beacon(self, beacon_id, latest=False):
         url = self.base_url + "beacons/" + beacon_id
+        if latest:
+            url += "?version=latest"
         return self.get_object("beacon", beacon_id, url)
 
     def get_milk(self, beacon_id, water, encrypted_status):
@@ -324,15 +326,17 @@ class BCDmanAPIClient(object):
         r = requests.get(url, headers=self.headers, verify=True)
         return (r.status_code, r.content)
 
-    def get_beacons(self, team_id=None, site_id=None, page=1, per_page=100):
+    def get_beacons(self, team_id=None, site_id=None, page=1, per_page=100, latest=False):
         url = self.base_url + "beacons?page=" + str(page) + "&perPage=" + str(per_page)
         if team_id:
             url += "&teamID=" + team_id
         elif site_id:
             url += "&siteID=" + site_id
+        if latest:
+            url += "&version=latest"
         return self.get_objects("beacons", url)
 
-    def paginate_beacons(self, team_id=None, site_id=None, max_page_count=None):
+    def paginate_beacons(self, team_id=None, site_id=None, max_page_count=None, latest=False):
         url = self.base_url + "beacons"
         if team_id:
             url += "?teamID=" + team_id + "&"
@@ -340,6 +344,10 @@ class BCDmanAPIClient(object):
             url += "?siteID=" + site_id + "&"
         else:
             url += "?"
+
+        if latest:
+            url += "version=latest&"
+        
         if max_page_count is None:
             url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
         else:
@@ -357,7 +365,7 @@ class BCDmanAPIClient(object):
 
             return (r.status_code, parsed["beacon"])
         except:
-            self.print_error("put beacon " + beacon_id + " failed", r.status_code, parsed) 
+            self.print_error("patch beacon " + beacon_id + " failed", r.status_code, parsed) 
             return (r.status_code, None)
 
     def put_beacon(self, beacon_id, body):
@@ -370,7 +378,7 @@ class BCDmanAPIClient(object):
             parsed = r.json()
             return (r.status_code, parsed["beacon"])
         except:
-            self.print_error("patch beacon " + beacon_id + " failed", r.status_code, parsed) 
+            self.print_error("put beacon " + beacon_id + " failed", r.status_code, parsed) 
             return (r.status_code, None)
 
     def get_pack(self, claim_code):

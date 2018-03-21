@@ -1,3 +1,6 @@
+env/
+examples/env/
+venv/
 *.pyc
 .DS_Store
 dist/
