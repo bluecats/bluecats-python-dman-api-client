@@ -399,7 +399,7 @@ class BCDmanAPIClient(object):
             self.print_error("get beacon modes for beacon " + beacon_id + " failed", r.status_code, parsed) 
             return (r.status_code, None)
 
-    def get_beacon_regions(self, region_id):
+    def get_beacon_region(self, region_id):
         self.logger.debug("checking beacon region IDs for beacon " + region_id)
 
         parsed = None
@@ -407,7 +407,7 @@ class BCDmanAPIClient(object):
             url = self.base_url + "beaconRegions/" + region_id
             r = requests.get(url, headers=self.headers, verify=True)
             parsed = r.json()
-            return (r.status_code, parsed["beaconRegions"]["id"])
+            return (r.status_code, parsed["beaconRegion"])
         except:
             self.print_error("Beacon Region " + region_id + " failed", r.status_code, parsed) 
             return r.status_code, None
