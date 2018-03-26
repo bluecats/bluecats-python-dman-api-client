@@ -206,7 +206,10 @@ class BCDmanAPIClient(object):
 
     def build_from_client_id_secret(self, client_id, client_secret):
         raw_auth = client_id + ":" + client_secret
-        auth_header_val = "BlueCats " + base64.b64encode(raw_auth)
+        try: 
+            auth_header_val = "BlueCats " + base64.b64encode(raw_auth)
+        except: 
+            auth_header_val = "BlueCats " + base64.b64encode(raw_auth.encode()).decode()
         self.headers = {
         'Content-Type': "application/json",
         'Authorization': auth_header_val,
@@ -216,7 +219,10 @@ class BCDmanAPIClient(object):
 
     def build_from_app_token_username_password(self, app_token, username, password):
         raw_auth = app_token + ":" + username + ":" + password
-        auth_header_val = "BlueCats " + base64.b64encode(raw_auth)
+        try: 
+            auth_header_val = "BlueCats " + base64.b64encode(raw_auth)
+        except: 
+            auth_header_val = "BlueCats " + base64.b64encode(raw_auth.encode()).decode()
         self.headers = {
         'Content-Type': "application/json",
         'Authorization': auth_header_val,
