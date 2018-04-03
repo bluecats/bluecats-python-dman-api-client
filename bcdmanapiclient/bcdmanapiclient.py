@@ -18,7 +18,10 @@ class BCDmanAPIClient(object):
         authorized = False
         while not authorized:
             if not username:
-                username = raw_input("enter bluecats dman api username/email:")
+                try:
+                    username = raw_input("enter bluecats dman api username/email:")
+                except:
+                    username = input("enter bluecats dman api username/email:")
             if username and not password:
                 password = getpass.getpass("enter bluecats dman api password:")
             if not username or not password:
@@ -28,7 +31,10 @@ class BCDmanAPIClient(object):
                 if api_client:
                     authorized = api_client.check_user_authorization()
                     if authorized:
-                        answer = raw_input("do you want to save your credentials? YES/no:")
+                        try:
+                            answer = raw_input("do you want to save your credentials? YES/no:")
+                        except:
+                            answer = input("do you want to save your credentials? YES/no:")
                         if not answer or len(answer) > 0 and answer.lower() == 'yes':
                             BCDmanAPIClient.save_user_config(app_token, username, password, configs_dir=configs_dir)
                     return api_client
@@ -43,7 +49,10 @@ class BCDmanAPIClient(object):
         authorized = False
         while not authorized:
             if not username:
-                username = raw_input("enter bluecats dman api username/email:")
+                try:
+                    username = raw_input("enter bluecats dman api username/email:")
+                except:
+                    username = input("enter bluecats dman api username/email:")
             if username and not password:
                 password = getpass.getpass("enter bluecats dman api password:")
             if not username or not password:
@@ -54,7 +63,10 @@ class BCDmanAPIClient(object):
                     authorized = api_client.check_user_authorization()
                     if authorized:
                         if access_token:
-                            answer = raw_input("do you want to save your access token? YES/no:")
+                            try:
+                                answer = raw_input("do you want to save your credentials? YES/no:")
+                            except:
+                                answer = input("do you want to save your credentials? YES/no:")
                             if not answer or len(answer) > 0 and answer.lower() == 'yes':
                                 BCDmanAPIClient.save_access_token_config(access_token, configs_dir=configs_dir)
                         return api_client
@@ -408,6 +420,7 @@ class BCDmanAPIClient(object):
             url = self.base_url + "beacons/" + beacon_id + "/beaconmodes"
             r = requests.get(url, headers=self.headers, verify=True)
             parsed = r.json()
+            print(parsed)
             return (r.status_code, parsed["beaconModes"])
         except:
             self.print_error("get beacon modes for beacon " + beacon_id + " failed", r.status_code, parsed) 
