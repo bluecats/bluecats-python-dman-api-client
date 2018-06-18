@@ -28,9 +28,9 @@ class BCDmanAPIClient(object):
                 print("sorry, try again or use Ctrl-D to exit")
             else:
                 api_client = BCDmanAPIClient.build_client_from_app_token_username_password(app_token, username, password, verbose=verbose)
-                if api_client and save:
+                if api_client:
                     authorized = api_client.check_user_authorization()
-                    if authorized:
+                    if authorized and save:
                         try:
                             answer = raw_input("do you want to save your credentials? YES/no:")
                         except:
