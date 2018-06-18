@@ -12,7 +12,7 @@ class BCDmanAPIClient(object):
     headers = None
 
     @staticmethod
-    def login_from_app_token(app_token, configs_dir=None, verbose=False):
+    def login_from_app_token(app_token, configs_dir=None, verbose=False, save=True):
         username = None
         password = None
         authorized = False
@@ -28,7 +28,7 @@ class BCDmanAPIClient(object):
                 print("sorry, try again or use Ctrl-D to exit")
             else:
                 api_client = BCDmanAPIClient.build_client_from_app_token_username_password(app_token, username, password, verbose=verbose)
-                if api_client:
+                if api_client and save:
                     authorized = api_client.check_user_authorization()
                     if authorized:
                         try:
@@ -43,7 +43,7 @@ class BCDmanAPIClient(object):
                     username = None
                     password = None
 
-    def login_from_client_id(client_id, configs_dir=None, verbose=False):
+    def login_from_client_id(client_id, configs_dir=None, verbose=False, save=True):
         username = None
         password = None
         authorized = False
@@ -61,7 +61,7 @@ class BCDmanAPIClient(object):
                 api_client, access_token = BCDmanAPIClient.build_client_from_client_id_username_password(client_id, username, password, verbose=verbose)
                 if api_client:
                     authorized = api_client.check_user_authorization()
-                    if authorized:
+                    if authorized and save:
                         if access_token:
                             try:
                                 answer = raw_input("do you want to save your credentials? YES/no:")
@@ -69,7 +69,7 @@ class BCDmanAPIClient(object):
                                 answer = input("do you want to save your credentials? YES/no:")
                             if not answer or len(answer) > 0 and answer.lower() == 'yes':
                                 BCDmanAPIClient.save_access_token_config(access_token, configs_dir=configs_dir)
-                        return api_client
+                    return api_client
                 if not authorized:
                     print("sorry, try again or use Ctrl-D to exit")
                     username = None
@@ -537,22 +537,29 @@ class BCDmanAPIClient(object):
     def get_devices(self, team_id=None, site_id=None, page=1, per_page=100): 
         self.logger.debug("getting devices")
 
-        parsed = None
-        try:
-            url = self.base_url + "devices?page=" + str(page) + "&perPage=" + str(per_page)
-            if(team_id is not None):
-                url += "&teamID=" + team_id
-            if(site_id is not None):
-                url += "&siteID=" + site_id
-            r = requests.get(url, headers=self.headers, verify=True)
-            parsed = r.json()
-            return (r.status_code, parsed["devices"], parsed["pagination"])
-        except:
-            self.print_error("get devices failed", r.status_code, parsed) 
-            return (r.status_code, None, None)
+        url = self.base_url + "devices?page=" + str(page) + "&perPage=" + str(per_page)
+        if team_id:
+            url += "&teamID=" + team_id
+        elif site_id:
+            url += "&siteID=" + site_id
+
+        return self.get_objects("devices", url)
 
     def paginate_devices(self, team_id=None, site_id=None):
-        return self.paginate_objects("device", lambda page,per_page: self.get_devices(team_id=team_id, site_id=site_id, page=page, per_page=per_page))
+        url = self.base_url + "devices"
+        if team_id:
+            url += "?teamID=" + team_id + "&"
+        elif site_id:
+            url += "?siteID=" + site_id + "&"
+        else:
+            url += "?"
+        
+        if max_page_count is None:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        else:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        return self.paginate_objects("devices", url_lambda, max_page_count=max_page_count)
+        
 
     def patch_device(self, device_id, body): 
         self.logger.debug("patching device " + device_id)
