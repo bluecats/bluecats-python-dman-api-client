@@ -35,7 +35,7 @@ class BCDmanAPIClient(object):
                             answer = raw_input("do you want to save your credentials? YES/no:")
                         except:
                             answer = input("do you want to save your credentials? YES/no:")
-                        if not answer or len(answer) > 0 and answer.lower() == 'yes':
+                        if not answer or (len(answer) > 0 and answer.lower() == 'yes'):
                             BCDmanAPIClient.save_user_config(app_token, username, password, configs_dir=configs_dir)
                     return api_client
                 if not authorized:
@@ -397,6 +397,19 @@ class BCDmanAPIClient(object):
             return (r.status_code, parsed["beacon"])
         except:
             self.print_error("put beacon " + beacon_id + " failed", r.status_code, parsed) 
+            return (r.status_code, None)
+
+    def transfer_beacons(self, body):
+        if self.verbose: 
+            print "transferring beacons"
+
+        result = None
+        try:
+            url = self.base_url + "beacontransfer"
+            r = requests.post(url=url, data=body, headers=self.headers, verify=True)
+            return (r.status_code, None)
+        except:
+            self.print_error("transfer beacons failed", r.status_code, result) 
             return (r.status_code, None)
 
     def get_pack(self, claim_code):
