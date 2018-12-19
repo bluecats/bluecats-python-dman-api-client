@@ -400,8 +400,7 @@ class BCDmanAPIClient(object):
             return (r.status_code, None)
 
     def transfer_beacons(self, body):
-        if self.verbose: 
-            print "transferring beacons"
+        self.logger.debug("transferring beacons")
 
         result = None
         try:
