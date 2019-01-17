@@ -7,3 +7,9 @@ dist/
 bcdmanapiclient.egg-info/
 build/
 .idea/
+.vscode/
+bcdmanapiclient/beacon.json
+bcdmanapiclient/conftest.py
+bcdmanapiclient/edge.json
+bcdmanapiclient/reformatTest.py
+tests/
