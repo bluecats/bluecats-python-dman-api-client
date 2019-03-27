@@ -374,6 +374,21 @@ class BCDmanAPIClient(object):
         url = self.base_url + "beacons/" + beacon_id
         return self.dman_api_request("beacon", beacon_id, url, "patch", data=body)
 
+    def post_team(self, body):
+        self.logger.debug("creating team")
+        url = self.base_url + "teams"
+        return self.dman_api_request("team", "", url, "post", data=body)
+
+    def post_site(self, body):
+        self.logger.debug("creating site")
+        url = self.base_url + "sites"
+        return self.dman_api_request("site", "", url, "post", data=body)
+
+    def post_invite(self, body):
+        self.logger.debug("creating invite")
+        url = self.base_url + "teamInvites"
+        return self.dman_api_request("teamInvite", "", url, "post", data=body)
+
     def put_beacon(self, beacon_id, body):
         self.logger.debug("putting beacon " + beacon_id)
         url = self.base_url + "beacons/" + beacon_id
@@ -501,7 +516,7 @@ class BCDmanAPIClient(object):
                 r = request(url, headers=self.headers, verify=True, timeout=30)            
             r.raise_for_status()
             # returns data if good request
-            if r.status_code == requests.codes.ok:
+            if (r.status_code == requests.codes.ok) or (r.status_code == requests.codes.created):
                 if pagination:
                     return (r.status_code, r.json()[object_key], r.json()["pagination"])
                 else:
