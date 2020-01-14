@@ -324,7 +324,7 @@ class BCDmanAPIClient(object):
                 base64.b64encode(encrypted_status)
                 )
         self.logger.debug('get_milk, url = %s', str(url))
-        return self.self.dman_api_request("milk", beacon_id, url, "get")
+        return self.dman_api_request("milk", beacon_id, url, "get")
 
     def get_firmware_info(self, beacon_id, version):
         url = "%sbeacons/%s/firmware/%s/" % (self.base_url, beacon_id, version)
