@@ -460,8 +460,8 @@ class BCDmanAPIClient(object):
     def confirm_beacon_firmware(self, beacon_id, encrypted_status):
         self.logger.debug("confirming firmware for beacon " + beacon_id)
         try:
-            print("encrypted_status:", encrypted_status)
-            print("base64 encrypted_status:" + base64.b64encode(encrypted_status))
+            print("encrypted_status: " + ''.join('{:02X}'.format(ord(c)) for c in encrypted_status))
+            print("base64 encrypted_status: " + base64.b64encode(encrypted_status))
             url = self.base_url + "beacons/" + beacon_id + "/firmware/confirm?status=" + base64.b64encode(encrypted_status)
             print("the URL is: ", url)
             r = requests.put(url, headers=self.headers, verify=True)
