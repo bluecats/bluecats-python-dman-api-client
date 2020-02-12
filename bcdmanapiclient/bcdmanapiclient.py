@@ -5,6 +5,7 @@ import getpass
 import os
 import shutil
 import logging
+import sys 
 
 class BCDmanAPIClient(object):
 
@@ -447,28 +448,25 @@ class BCDmanAPIClient(object):
                         base64.b64encode(encrypted_status)
         return self.dman_api_request("settings", beacon_id, url, "get")
 
+    def python_version_encoding(self, bytes_to_encode):
+        if (sys.version_info > (3, 0)):
+            # Checks if Python 3 encoding code 
+            return base64.b64encode(bytes_to_encode).decode("ascii")
+        else:
+            # Python 2 code in this block
+            return base64.b64encode(bytes_to_encode)
+
     def confirm_beacon_settings(self, beacon_id, encrypted_status):
         self.logger.debug("confirming settings for beacon " + beacon_id)
-        try:
-            url = self.base_url + "beacons/" + beacon_id + "/versions/confirm?status=" + base64.b64encode(encrypted_status)
-            r = requests.put(url, headers=self.headers, verify=True)
-            return (r.status_code, r.status_code == requests.codes.accepted)
-        except:
-            self.print_error("confirm settings for beacon " + beacon_id + " failed", r.status_code, None) 
-            return (r.status_code, False)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "beacons/" + beacon_id + "/versions/confirm?status=" + base64_encoded_status
+        return self.dman_api_request("beacon", beacon_id, url, "put")
 
     def confirm_beacon_firmware(self, beacon_id, encrypted_status):
         self.logger.debug("confirming firmware for beacon " + beacon_id)
-        try:
-            print("encrypted_status:", encrypted_status)
-            print("base64 encrypted_status:" + base64.b64encode(encrypted_status))
-            url = self.base_url + "beacons/" + beacon_id + "/firmware/confirm?status=" + base64.b64encode(encrypted_status)
-            print("the URL is: ", url)
-            r = requests.put(url, headers=self.headers, verify=True)
-            return (r.status_code, r.status_code == requests.codes.accepted)
-        except:
-            self.print_error("confirm settings for beacon " + beacon_id + " failed", r.status_code, None) 
-            return (r.status_code, False)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "beacons/" + beacon_id + "/firmware/confirm?status=" + base64_encoded_status
+        return self.dman_api_request("beacon", beacon_id, url, "put")
 
     def get_device(self, device_id):
         url = self.base_url + "devices/" + device_id
