@@ -219,7 +219,7 @@ class BCDmanAPIClient(object):
 
     def build_from_client_id_secret(self, client_id, client_secret):
         raw_auth = client_id + ":" + client_secret
-        try: 
+        try:
             auth_header_val = "BlueCats " + base64.b64encode(raw_auth)
         except: 
             auth_header_val = "BlueCats " + base64.b64encode(raw_auth.encode()).decode()
@@ -319,10 +319,12 @@ class BCDmanAPIClient(object):
         return self.dman_api_request("beacon", beacon_id, url, "get")
 
     def get_milk(self, beacon_id, water, encrypted_status):
+        base64_encoded_water = self.python_version_encoding(water)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
         url = "%sbeacons/%s/milk?water=%s&status=%s" % (
                 self.base_url, beacon_id, 
-                base64.b64encode(water),
-                base64.b64encode(encrypted_status)
+                base64_encoded_water,
+                base64_encoded_status
                 )
         self.logger.debug('get_milk, url = %s', str(url))
         return self.dman_api_request("milk", beacon_id, url, "get")
@@ -337,8 +339,9 @@ class BCDmanAPIClient(object):
         return r.status_code == requests.codes.ok, parsed
 
     def get_firmware(self, beacon_id, version, encrypted_status):
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
-                self.base_url, beacon_id, version, base64.b64encode(encrypted_status)
+                self.base_url, beacon_id, version, base64_encoded_status
                 )
         self.logger.debug('get firmware, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
@@ -438,14 +441,15 @@ class BCDmanAPIClient(object):
 
     def get_beacon_futuresettings(self, beacon_id, encrypted_status):
         self.logger.debug("getting future settings for beacon " + beacon_id)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
         url = self.base_url + "beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
-                        base64.b64encode(encrypted_status) + "&firmwareVersion=latest"
+                        base64_encoded_status + "&firmwareVersion=latest"
         return self.dman_api_request("settings", beacon_id, url, "get")
 
     def get_beacon_settings(self, beacon_id, encrypted_status): 
         self.logger.debug("getting settings for beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + \
-                        base64.b64encode(encrypted_status)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + base64_encoded_status
         return self.dman_api_request("settings", beacon_id, url, "get")
 
     def python_version_encoding(self, bytes_to_encode):
