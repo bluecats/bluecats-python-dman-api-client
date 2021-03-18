@@ -9,7 +9,7 @@ import sys
 
 class BCDmanAPIClient(object):
 
-    base_url = "https://api.bluecats.com/"
+    base_url = "https://api.bluecats.com"
     headers = None
 
     @staticmethod
@@ -246,7 +246,7 @@ class BCDmanAPIClient(object):
     def build_from_client_id_username_password(self, client_id, username, password):
 
         data = {'client_id':client_id, 'grant_type': 'password', 'username': username, 'password':password }
-        url = self.base_url + "token"
+        url = self.base_url + "/token"
         r = requests.post(url, data=data, verify=True)
         if r.status_code == requests.codes.ok:
             parsed = r.json()
@@ -271,9 +271,18 @@ class BCDmanAPIClient(object):
         }
         return self
 
+    def claim_beacons(self, claim_code, team_id, site_id=None):
+        url = self.base_url + "/beacons/claim/{claim_code}" 
+        if site_id: 
+            url += "?siteID={siteID}&teamID={teamID}"
+        else:
+            url += "?teamID={teamID}"
+        body = {"id": str(claim_code)}
+        return self.dman_api_request("claim_code", claim_code, url, "put", data=body)
+
     def check_user_authorization(self):
         self.logger.debug("checking bluecats dman api authorization")
-        url = self.base_url + "account/verifycredentials"
+        url = self.base_url + "/account/verifycredentials"
         r = requests.get(url, headers=self.headers, verify=True)
         authorized = r.status_code == requests.codes.ok
         
@@ -283,61 +292,94 @@ class BCDmanAPIClient(object):
             self.logger.debug("authorization failed - status_code:" + str(r.status_code))
         
         return authorized
+    
+    def create_starter_pack(self, claim_code, beacons): 
+        url = self.base_url + "/packs"
+        body = {"claimCode": claim_code, "beaconIDs": beacons}
+        return self.dman_api_request("create starter pack", claim_code, url, "put", data=body)
+    
+    def confirm_beacon_settings(self, beacon_id, encrypted_status):
+        self.logger.debug("confirming settings for beacon " + beacon_id)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "/beacons/" + beacon_id + "/versions/confirm?status=" + base64_encoded_status
+        return self.dman_api_request("beacon", beacon_id, url, "put")
 
-    def get_team(self, team_id):
-        url = self.base_url + "teams/" + team_id
-        return self.dman_api_request("team", team_id, url, "get")
+    def confirm_beacon_firmware(self, beacon_id, encrypted_status):
+        self.logger.debug("confirming firmware for beacon " + beacon_id)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "/beacons/" + beacon_id + "/firmware/confirm?status=" + base64_encoded_status
+        return self.dman_api_request("beacon", beacon_id, url, "put")
 
-    def get_teams(self, page=1, per_page=100):
-        url = self.base_url + "teams?page=" + str(page) + "&perPage=" + str(per_page)
-        return self.dman_api_request("teams", "", url, "get", pagination=True)
-
-    def paginate_teams(self):
-        url_lambda = lambda page,per_page: self.base_url + "teams?page=" + str(page) + "&perPage=" + str(per_page)
-        return self.paginate_objects("teams", url_lambda)
-
-    def get_site(self, site_id):
-        url = self.base_url + "sites/" + site_id
-        return self.dman_api_request("site", site_id, url, "get")
-
-    def get_sites(self, team_id=None, site_id=None, page=1, per_page=100):
-        url = self.base_url + "sites?page=" + str(page) + "&perPage=" + str(per_page)
+    def delete_beacon(self, beacon_id):
+        url = self.base_url + "/beacons/" + beacon_id
+        return self.dman_api_request("beacons", beacon_id, url, "delete")
+    
+    def get_all_beacon_regions(self):
+        self.logger.debug("checking all beacon region IDs")
+        url = self.base_url + "/beaconRegions/"
+        return self.dman_api_request("beaconRegions", "", url, "get")
+    
+    def get_beacon(self, beacon_id, latest=False):
+        url = self.base_url + "/beacons/" + beacon_id
+        if latest:
+            url += "?version=latest"
+        return self.dman_api_request("beacon", beacon_id, url, "get")
+    
+    def get_beacons(self, team_id=None, site_id=None, page=1, per_page=100, latest=False):
+        url = self.base_url + "/beacons?page=" + str(page) + "&perPage=" + str(per_page)
         if team_id:
             url += "&teamID=" + team_id
         elif site_id:
             url += "&siteID=" + site_id
-        return self.dman_api_request("sites", "", url, "get", pagination=True)
-
-    def paginate_sites(self, team_id):
-        url_lambda = lambda page,per_page: self.base_url + "sites?teamID=" + team_id + "&page=" + str(page) + "&perPage=" + str(per_page)
-        return self.paginate_objects("sites", url_lambda)
-
-    def get_beacon(self, beacon_id, latest=False):
-        url = self.base_url + "beacons/" + beacon_id
         if latest:
-            url += "?version=latest"
-        return self.dman_api_request("beacon", beacon_id, url, "get")
-
-    def get_milk(self, beacon_id, water, encrypted_status):
-        base64_encoded_water = self.python_version_encoding(water)
+            url += "&version=latest"
+        return self.dman_api_request("beacons", "", url, "get")
+    
+    def get_beacon_futuresettings(self, beacon_id, encrypted_status):
+        self.logger.debug("getting future settings for beacon {beacon_id}")
         base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = "%sbeacons/%s/milk?water=%s&status=%s" % (
-                self.base_url, beacon_id, 
-                base64_encoded_water,
-                base64_encoded_status
-                )
-        self.logger.debug('get_milk, url = %s', str(url))
-        return self.dman_api_request("milk", beacon_id, url, "get")
+        url = self.base_url + "/beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
+                        base64_encoded_status + "&firmwareVersion=latest"
+        return self.dman_api_request("settings", beacon_id, url, "get")
 
-    def get_firmware_info(self, beacon_id, version):
-        url = "%sbeacons/%s/firmware/%s/" % (self.base_url, beacon_id, version)
-        self.logger.warn('get firmware info, url = %s', str(url))
-        r = requests.get(url, headers=self.headers, verify=True)
-        parsed = r.json()
-        if 'firmware' in parsed:
-            parsed = parsed['firmware']
-        return r.status_code == requests.codes.ok, parsed
+    def get_beacon_loudnesses(self, beacon_id):
+        self.logger.debug("getting beacon loudnesses for beacon {beacon_id}")
+        url = self.base_url + "/beacons/" + beacon_id + "/beaconloudnesses"
+        return self.dman_api_request("beaconLoudnesses", beacon_id, url, "get")
+    
+    def get_beacon_modes(self, beacon_id):
+        self.logger.debug("getting beacon modes for beacon {beacon_id}")
+        url = self.base_url + "/beacons/" + beacon_id + "/beaconmodes"
+        return self.dman_api_request("beaconModes", beacon_id, url, "get")
 
+    def get_beacon_region(self, region_id):
+        self.logger.debug("checking beacon region IDs for beacon {region_id}")
+        url = self.base_url + "/beaconRegions/" + region_id
+        return self.dman_api_request("beaconRegion", region_id, url, "get")
+
+    def get_beacon_settings(self, beacon_id, encrypted_status): 
+        self.logger.debug("getting settings for beacon {beacon_id}")
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = self.base_url + "/beacons/" + beacon_id + "/versions/latest/settings?status=" + base64_encoded_status
+        return self.dman_api_request("settings", beacon_id, url, "get")
+    
+    def get_device(self, device_id):
+        url = self.base_url + "devices/" + device_id
+        return self.dman_api_request("device", device_id, url, "get")
+
+    def get_devices(self, team_id=None, site_id=None, page=1, per_page=100): 
+        self.logger.debug("getting devices")
+        url = self.base_url + "/devices?page=" + str(page) + "&perPage=" + str(per_page)
+        if team_id:
+            url += "&teamID=" + team_id
+        elif site_id:
+            url += "&siteID=" + site_id
+        return self.dman_api_request("devices", "", url, "get", pagination=True)
+    
+    def get_device_config(self, device_id): 
+        url = self.base_url + "/Devices/{device_id}/Config"
+        return self.dman_api_request("device config", device_id, url, "get")
+    
     def get_firmware(self, beacon_id, version, encrypted_status):
         base64_encoded_status = self.python_version_encoding(encrypted_status)
         url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
@@ -346,19 +388,107 @@ class BCDmanAPIClient(object):
         self.logger.debug('get firmware, url = %s', str(url))
         r = requests.get(url, headers=self.headers, verify=True)
         return (r.status_code, r.content)
+    
+    def get_firmware_info(self, beacon_id, version):
+        url = "{self.base_url}/beacons/{beacon_id}/firmware/{version}/"
+        self.logger.warn('get firmware info, url = %s', str(url))
+        r = requests.get(url, headers=self.headers, verify=True)
+        parsed = r.json()
+        if 'firmware' in parsed:
+            parsed = parsed['firmware']
+        return r.status_code == requests.codes.ok, parsed
+    
+    def get_rf_module(self, rf_module_id):
+        url = self.base_url + "/RFModuleInfo/" + rf_module_id
+        return self.dman_api_request("rf_module_id", rf_module_id, url, "get")
+    
+    def get_mfr_run(self, run_id):
+        url = self.base_url + "/mfr/runs/{run_id}"
+        return self.dman_api_request("run", run_id, url, "get")
+    
+    def get_mfr_beacon(self, beacon_id):
+        url = self.base_url + "/mfr/beacons/{beacon_id}"
+        return self.dman_api_request("beacon", beacon_id, url, "get")
+    
+    def get_provision_device(self, device_id, bearer_token=False, timeout=60):
+        url = self.base_url + "/devices/" + str(device_id) + "/provision"
+        #temporaily store headers
+        temp_client_headers = None
+        if bearer_token:
+            temp_client_headers = self.headers
+            self.headers["Authorization"] = 'BlueCats {bearer}'
+        # return headers to normal
+        response = self.dman_api_request("provision", device_id, url, "get")
+        self.headers = temp_client_headers
+        return response
 
-    def get_beacons(self, team_id=None, site_id=None, page=1, per_page=100, latest=False):
-        url = self.base_url + "beacons?page=" + str(page) + "&perPage=" + str(per_page)
+    def get_site(self, site_id):
+        url = self.base_url + "/sites/" + site_id
+        return self.dman_api_request("site", site_id, url, "get")
+
+    def get_sites(self, team_id=None, site_id=None, page=1, per_page=100):
+        url = self.base_url + "/sites?page=" + str(page) + "&perPage=" + str(per_page)
         if team_id:
             url += "&teamID=" + team_id
         elif site_id:
             url += "&siteID=" + site_id
-        if latest:
-            url += "&version=latest"
-        return self.dman_api_request("beacons", "", url, "get")
+        return self.dman_api_request("sites", "", url, "get", pagination=True)
+
+    def get_target_speeds(self, beacon_id):
+        self.logger.debug("getting target speeds for beacon {beacon_id}")
+        url = self.base_url + "/beacons/" + beacon_id + "/targetspeeds"
+        return self.dman_api_request("targetSpeeds", beacon_id, url, "get")
+
+    def get_team(self, team_id):
+        url = self.base_url + "/teams/" + team_id
+        return self.dman_api_request("team", team_id, url, "get")
+    
+    def get_milk(self, beacon_id, water, encrypted_status):
+        base64_encoded_water = self.python_version_encoding(water)
+        base64_encoded_status = self.python_version_encoding(encrypted_status)
+        url = "%s/beacons/%s/milk?water=%s&status=%s" % (
+                self.base_url, beacon_id, 
+                base64_encoded_water,
+                base64_encoded_status
+                )
+        self.logger.debug('get_milk, url = %s', str(url))
+        return self.dman_api_request("milk", beacon_id, url, "get")
+    
+    def get_pack(self, claim_code):
+        self.logger.debug("getting pack {claim_code}")
+        url = self.base_url + "/packs/" + claim_code
+        return self.dman_api_request("starterPack", claim_code, url, "get")
+
+    def get_teams(self, page=1, per_page=100):
+        url = self.base_url + "/teams?page=" + str(page) + "&perPage=" + str(per_page)
+        return self.dman_api_request("teams", "", url, "get", pagination=True)
 
     def paginate_beacons(self, team_id=None, site_id=None, max_page_count=None, latest=False):
-        url = self.base_url + "beacons"
+        url = self.base_url + "/beacons"
+        if team_id:
+            url += "?teamID=" + team_id + "&"
+        elif site_id:
+            url += "?siteID=" + site_id + "&"
+        else:
+            url += "?"
+        if latest:
+            url += "version=latest&"
+        if max_page_count is None:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        else:
+            url_lambda = lambda page,per_page: url + "page=" + str(page) + "&perPage=" + str(per_page)
+        return self.paginate_objects("beacons", url_lambda, max_page_count=max_page_count)
+    
+    def paginate_sites(self, team_id):
+        url_lambda = lambda page,per_page: self.base_url + "/sites?teamID=" + team_id + "&page=" + str(page) + "&perPage=" + str(per_page)
+        return self.paginate_objects("sites", url_lambda)
+
+    def paginate_teams(self):
+        url_lambda = lambda page,per_page: self.base_url + "/teams?page=" + str(page) + "&perPage=" + str(per_page)
+        return self.paginate_objects("teams", url_lambda)
+    
+    def paginate_mfr_beacons(self, team_id=None, site_id=None, max_page_count=None, latest=False):
+        url = self.base_url + "/mfr/beacons"
         if team_id:
             url += "?teamID=" + team_id + "&"
         elif site_id:
@@ -375,82 +505,66 @@ class BCDmanAPIClient(object):
 
     def patch_beacon(self, beacon_id, body):
         self.logger.debug("patching beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id
+        url = self.base_url + "/beacons/" + beacon_id
         return self.dman_api_request("beacon", beacon_id, url, "patch", data=body)
+    
+    def patch_mfr_beacon(self, beacon_id, body):
+        self.logger.debug("patching beacon " + beacon_id)
+        url = self.base_url + "/mfr/beacons/{beacon_id}"
+        return self.dman_api_request("beacon", beacon_id, url, "patch", data=body)
+    
+    def post_device(self, device_id, body):
+        self.logger.debug("posting device {device_id}")
+        url = self.base_url + "/devices"
+        return self.dman_api_request("device", device_id, url, "post", data=body)
+    
+    def post_mfr_beacon(self, beacon_id, body):
+        self.logger.debug("posting device {beacon_id}")
+        url = self.base_url + "/mfr/beacons"
+        return self.dman_api_request("device", beacon_id, url, "post", data=body)
+    
+    def post_mfr_subdevices(self, device_id, body):
+        self.logger.debug("posting device {device_id}")
+        url = self.base_url + "/mfr/Devices/{device_id}/subdevices"
+        return self.dman_api_request("device", device_id, url, "post", data=body)
 
     def post_team(self, body):
         self.logger.debug("creating team")
-        url = self.base_url + "teams"
+        url = self.base_url + "/teams"
         return self.dman_api_request("team", "", url, "post", data=body)
 
     def post_site(self, body):
         self.logger.debug("creating site")
-        url = self.base_url + "sites"
+        url = self.base_url + "/sites"
         return self.dman_api_request("site", "", url, "post", data=body)
 
     def post_invite(self, body):
         self.logger.debug("creating invite")
-        url = self.base_url + "teamInvites"
+        url = self.base_url + "/teamInvites"
         return self.dman_api_request("teamInvite", "", url, "post", data=body)
 
     def put_beacon(self, beacon_id, body):
-        self.logger.debug("putting beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id
+        self.logger.debug("putting beacon {beacon_id}")
+        url = self.base_url + "/beacons/" + beacon_id
         return self.dman_api_request("beacon", beacon_id, url, "put", data=body)
 
-    def transfer_beacons(self, body):
-        self.logger.debug("transferring beacons")
-        result = None
-        try:
-            url = self.base_url + "beacontransfer"
-            r = requests.post(url=url, data=body, headers=self.headers, verify=True)
-            return (r.status_code, None)
-        except:
-            self.print_error("transfer beacons failed", r.status_code, result) 
-            return (r.status_code, None)
+    def put_mfr_beacon_state(self, beacon_id, state):
+        """ PUT beacon mfr state endpoint. Need manufacturing role.
+        Used for putting beacon's manufacturing state. 
 
-    def get_pack(self, claim_code):
-        self.logger.debug("getting pack " + claim_code)
-        url = self.base_url + "packs/" + claim_code
-        return self.dman_api_request("starterPack", claim_code, url, "get")
+        :param beacon_id: (str) beacon identifier like serialNumber or mac
+        :param state: (str) MFR state number to be patched. MFR state values: 
+            Created = 1, PassedTests = 2, Rejected = 3,
+            Assembled = 4, SettingsUpdated = 5, FwFlashed = 6
+        :rtype: (obj) response request object
+        """
+        url = self.base_url + "/mfr/beacons/{beacon_id}/mfrstate/{state}"
+        return self.dman_api_request("mfr beacon state", beacon_id, url, "put")
 
-    def get_beacon_modes(self, beacon_id):
-        self.logger.debug("getting beacon modes for beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id + "/beaconmodes"
-        return self.dman_api_request("beaconModes", beacon_id, url, "get")
-
-    def get_beacon_region(self, region_id):
-        self.logger.debug("checking beacon region IDs for beacon " + region_id)
-        url = self.base_url + "beaconRegions/" + region_id
-        return self.dman_api_request("beaconRegion", region_id, url, "get")
-
-    def get_all_beacon_regions(self):
-        self.logger.debug("checking all beacon region IDs")
-        url = self.base_url + "beaconRegions/"
-        return self.dman_api_request("beaconRegions", "", url, "get")
-
-    def get_target_speeds(self, beacon_id):
-        self.logger.debug("getting target speeds for beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id + "/targetspeeds"
-        return self.dman_api_request("targetSpeeds", beacon_id, url, "get")
-
-    def get_beacon_loudnesses(self, beacon_id):
-        self.logger.debug("getting beacon loudnesses for beacon " + beacon_id)
-        url = self.base_url + "beacons/" + beacon_id + "/beaconloudnesses"
-        return self.dman_api_request("beaconLoudnesses", beacon_id, url, "get")
-
-    def get_beacon_futuresettings(self, beacon_id, encrypted_status):
-        self.logger.debug("getting future settings for beacon " + beacon_id)
-        base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = self.base_url + "beacons/" + beacon_id + "/versions/latest/futuresettings?status=" + \
-                        base64_encoded_status + "&firmwareVersion=latest"
-        return self.dman_api_request("settings", beacon_id, url, "get")
-
-    def get_beacon_settings(self, beacon_id, encrypted_status): 
-        self.logger.debug("getting settings for beacon " + beacon_id)
-        base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = self.base_url + "beacons/" + beacon_id + "/versions/latest/settings?status=" + base64_encoded_status
-        return self.dman_api_request("settings", beacon_id, url, "get")
+    def put_rf_module(self, rf_module_id, body):
+        self.logger.debug("putting rf_module_id {rf_module_id}")
+        url = self.base_url + "/RFModuleInfo/" + rf_module_id
+        return self.dman_api_request("rf_module_id", rf_module_id, url, "put", data=body)
 
     def python_version_encoding(self, bytes_to_encode):
         if (sys.version_info > (3, 0)):
@@ -460,34 +574,8 @@ class BCDmanAPIClient(object):
             # Python 2 code in this block
             return base64.b64encode(bytes_to_encode)
 
-    def confirm_beacon_settings(self, beacon_id, encrypted_status):
-        self.logger.debug("confirming settings for beacon " + beacon_id)
-        base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = self.base_url + "beacons/" + beacon_id + "/versions/confirm?status=" + base64_encoded_status
-        return self.dman_api_request("beacon", beacon_id, url, "put")
-
-    def confirm_beacon_firmware(self, beacon_id, encrypted_status):
-        self.logger.debug("confirming firmware for beacon " + beacon_id)
-        base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = self.base_url + "beacons/" + beacon_id + "/firmware/confirm?status=" + base64_encoded_status
-        return self.dman_api_request("beacon", beacon_id, url, "put")
-
-    def get_device(self, device_id):
-        url = self.base_url + "devices/" + device_id
-        return self.dman_api_request("device", device_id, url, "get")
-
-    def get_devices(self, team_id=None, site_id=None, page=1, per_page=100): 
-        self.logger.debug("getting devices")
-        url = self.base_url + "devices?page=" + str(page) + "&perPage=" + str(per_page)
-        if team_id:
-            url += "&teamID=" + team_id
-        elif site_id:
-            url += "&siteID=" + site_id
-
-        return self.dman_api_request("devices", "", url, "get", pagination=True)
-
     def paginate_devices(self, team_id=None, site_id=None, max_page_count=None):
-        url = self.base_url + "devices"
+        url = self.base_url + "/devices"
         if team_id:
             url += "?teamID=" + team_id + "&"
         elif site_id:
@@ -502,43 +590,47 @@ class BCDmanAPIClient(object):
         return self.paginate_objects("devices", url_lambda, max_page_count=max_page_count)
 
     def patch_device(self, device_id, body): 
-        self.logger.debug("patching device " + device_id)
-        url = self.base_url + "devices/" + device_id
+        self.logger.debug("patching device {device_id}")
+        url = self.base_url + "/devices/" + device_id
         return self.dman_api_request("device", device_id, url, "patch", data=body)
+    
+    def transfer_beacons(self, body):
+        self.logger.debug("transferring beacons")
+        result = None
+        try:
+            url = self.base_url + "/beacontransfer"
+            r = requests.post(url=url, data=body, headers=self.headers, verify=True)
+            return (r.status_code, None)
+        except:
+            self.print_error("transfer beacons failed", r.status_code, result) 
+            return (r.status_code, None)
 
-    def dman_api_request(self, object_key, object_id, url, requestType, data=None, pagination=False):
+    def dman_api_request(self, object_key, object_id, url, requestType, data=None, pagination=False, timeout=30):
         self.logger.debug(requestType + "ing " + object_key + " " + object_id) 
         # gets the request type and wraps it
         request = getattr(requests, requestType)
         try:
             # checks if there is data to post or patch 
             if data is not None:
-                r = request(url, data=data, headers=self.headers, verify=True, timeout=30)
+                data = json.dumps(data)
+                response = request(url, data=data, headers=self.headers, verify=True, timeout=timeout)
             else: 
-                r = request(url, headers=self.headers, verify=True, timeout=30)            
-            r.raise_for_status()
+                response = request(url, headers=self.headers, verify=True, timeout=timeout)            
+            response.raise_for_status()
             # returns data if good request
-            if (r.status_code == requests.codes.ok) or (r.status_code == requests.codes.created):
-                if pagination:
-                    return (r.status_code, r.json()[object_key], r.json()["pagination"])
-                else:
-                    return (r.status_code, r.json()[object_key])
-            else:
-                if pagination:
-                    return (r.status_code, None, None)
-                else: 
-                    return (r.status_code, None)
-        # when fails and not a bad request (timeouts, other errors)
-        except requests.exceptions.RequestException as err:
-            getobjecterror = "Error: " + requestType + object_key + " " + object_id + " failed "
-            self.print_error(getobjecterror, "", str(err))
-            if pagination: 
-                return (-1, None, None)
-            else:
-                return(-1, None)
+            if (response.status_code == requests.codes.ok) or (response.status_code == requests.codes.created):
+                return response
+
+        except requests.exceptions.ConnectionError: 
+            return {"ConnectionError": "Get Connection Failed"}
+        except requests.exceptions.Timeout: 
+            return {"Timeout": "Connection Failed"}
+        except:
+            return {"Unknown": "Request exception"}
+
 
     def paginate_objects(self, objects_key, get_objects_url_lambda, max_page_count=None):
-        self.logger.debug("paginating " + objects_key)
+        self.logger.debug("paginating {objects_key}")
 
         objects = []
         next_page = 1
