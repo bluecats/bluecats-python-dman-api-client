@@ -460,6 +460,11 @@ class BCDmanAPIClient(object):
         self.logger.debug(f"getting pack {claim_code}")
         url = self.base_url + "/packs/" + claim_code
         return self.dman_api_request("starterPack", claim_code, url, "get")
+    
+    def get_subdevices(self, device_id):
+        self.logger.debug(f"get subdevices {device_id}")
+        url = self.base_url + "/Devices/" + device_id + "/Subdevices" 
+        return self.dman_api_request("subdevices", device_id, url, "get")
 
     def get_teams(self, page=1, per_page=100):
         url = self.base_url + "/teams?page=" + str(page) + "&perPage=" + str(per_page)
