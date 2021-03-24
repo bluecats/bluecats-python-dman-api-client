@@ -297,7 +297,7 @@ class BCDmanAPIClient(object):
     def create_starter_pack(self, claim_code, beacons): 
         url = self.base_url + "/packs"
         body = {"claimCode": claim_code, "beaconIDs": beacons}
-        return self.dman_api_request("create starter pack", claim_code, url, "put", data=body)
+        return self.dman_api_request("create starter pack", claim_code, url, "post", data=body)
     
     def confirm_beacon_settings(self, beacon_id, encrypted_status):
         self.logger.debug("confirming settings for beacon " + beacon_id)
