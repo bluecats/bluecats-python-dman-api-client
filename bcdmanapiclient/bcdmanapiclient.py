@@ -494,10 +494,12 @@ class BCDmanAPIClient(object):
         url_lambda = lambda page,per_page: self.base_url + "/teams?page=" + str(page) + "&perPage=" + str(per_page)
         return self.paginate_objects("teams", url_lambda)
     
-    def paginate_mfr_beacons(self, team_id=None, site_id=None, max_page_count=None, latest=False):
+    def paginate_mfr_beacons(self, team_id=None, site_id=None, run_id=None, max_page_count=None, latest=False):
         url = self.base_url + "/mfr/beacons"
         if team_id:
             url += "?teamID=" + team_id + "&"
+        if run_id:
+            url += "?runID=" + run_id + "&"
         elif site_id:
             url += "?siteID=" + site_id + "&"
         else:
@@ -637,12 +639,13 @@ class BCDmanAPIClient(object):
         per_page = 100
         while next_page <= page_count:
             url = get_objects_url_lambda(page=next_page, per_page=per_page)
-            status_code, next_objects, pagination = self.dman_api_request(objects_key, "", url, "get", pagination=True)
-            if status_code == requests.codes.ok:
-                objects.extend(next_objects)
-                next_page = pagination["page"] + 1
-                page_count = pagination["pageCount"]
-                self.logger.warning("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(next_objects)) + " " + objects_key)
+            response = self.dman_api_request(objects_key, "", url, "get", pagination=True)
+            if response.ok:
+                json_object = response.json()
+                objects.extend(json_object[objects_key])
+                next_page = json_object["pagination"]["page"] + 1
+                page_count = json_object["pagination"]["pageCount"]
+                self.logger.warning("page " + str(next_page - 1) + " of " + str(page_count) + " contains " + str(len(json_object[objects_key])) + " " + objects_key)
             else:
                 return (False, objects)
 
