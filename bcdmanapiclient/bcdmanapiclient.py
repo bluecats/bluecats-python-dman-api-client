@@ -610,7 +610,7 @@ class BCDmanAPIClient(object):
 
 
     def dman_api_request(self, object_key, object_id, url, requestType, data=None, pagination=False, timeout=30):
-        self.logger.debug(requestType + "ing " + object_key + " " + object_id) 
+        self.logger.debug(f"{requestType}ing {object_key} {object_id}")
         # gets the request type and wraps it
         request = getattr(requests, requestType)
         try:
