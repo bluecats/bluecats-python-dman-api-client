@@ -11,6 +11,7 @@ import copy
 class BCDmanAPIClient(object):
 
     base_url = "https://api.bluecats.com"
+    #base_url = "https://api-stage.apps.bluecats.com"
     headers = None
 
     @staticmethod
@@ -314,6 +315,10 @@ class BCDmanAPIClient(object):
     def delete_beacon(self, beacon_id):
         url = self.base_url + "/beacons/" + beacon_id
         return self.dman_api_request("beacons", beacon_id, url, "delete")
+    
+    def delete_device(self, device_id):
+        url = self.base_url + "/devices/" + device_id
+        return self.dman_api_request("devices", device_id, url, "delete")
     
     def get_all_beacon_regions(self):
         self.logger.debug("checking all beacon region IDs")
