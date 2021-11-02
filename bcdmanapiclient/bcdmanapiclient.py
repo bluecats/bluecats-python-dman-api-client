@@ -403,6 +403,10 @@ class BCDmanAPIClient(object):
         if 'firmware' in parsed:
             parsed = parsed['firmware']
         return r.status_code == requests.codes.ok, parsed
+
+    def get_device_firmware(self, model, version):
+        url = f"{self.base_url}/DeviceModels/{model}/Firmware/{version}/"
+        return self.dman_api_request("device_firmware", version, url, "get")
     
     def get_rf_module(self, rf_module_id):
         url = self.base_url + "/RFModuleInfo/" + rf_module_id
