@@ -11,7 +11,7 @@ import copy
 class BCDmanAPIClient(object):
 
     base_url = "https://api.bluecats.com"
-    #base_url = "https://api-stage.apps.bluecats.com"
+    stage_base_url = "https://api-stage.apps.bluecats.com"
     headers = None
 
     @staticmethod
@@ -386,23 +386,24 @@ class BCDmanAPIClient(object):
         url = self.base_url + f"/Devices/{device_id}/Config"
         return self.dman_api_request("device config", device_id, url, "get")
     
-    def get_firmware(self, beacon_id, version, encrypted_status):
-        base64_encoded_status = self.python_version_encoding(encrypted_status)
-        url = "%sbeacons/%s/firmware/%s/hex?status=%s" % (
-                self.base_url, beacon_id, version, base64_encoded_status
-                )
+    def get_firmware(self, beacon_id, version="latest", encrypted_status=None):
+        if (version == "latest") or (encrypted_status is None): 
+            url = "%s/beacons/%s/firmware/latest/hex" % (
+                self.base_url, beacon_id)
+        else:
+            base64_encoded_status = self.python_version_encoding(encrypted_status)
+            url = "%s/beacons/%s/firmware/%s/hex?status=%s" % (
+                    self.base_url, beacon_id, version, base64_encoded_status)
+
         self.logger.debug('get firmware, url = %s', str(url))
-        r = requests.get(url, headers=self.headers, verify=True)
-        return (r.status_code, r.content)
+        response = requests.get(url, headers=self.headers, verify=True)
+        return response
     
     def get_firmware_info(self, beacon_id, version):
         url = f"{self.base_url}/beacons/{beacon_id}/firmware/{version}/"
         self.logger.warn('get firmware info, url = %s', str(url))
-        r = requests.get(url, headers=self.headers, verify=True)
-        parsed = r.json()
-        if 'firmware' in parsed:
-            parsed = parsed['firmware']
-        return r.status_code == requests.codes.ok, parsed
+        response = requests.get(url, headers=self.headers, verify=True)
+        return response
 
     def get_device_firmware(self, model, version):
         url = f"{self.base_url}/DeviceModels/{model}/Firmware/{version}/"
